@@ -1699,9 +1699,22 @@ namespace NUglify.Css
                     parsedMargin = ParseMargin() == Parsed.True;
                 }
 
+                // CSS Nesting: allow nested style rules and nested at-rules inside declaration blocks.
+                // if we didn't parse a declaration or margin, try those constructs before reporting an error.
+                var parsedNestedRule = false;
+                var parsedNestedAtRule = false;
+                if (parsedDecl == Parsed.Empty && !parsedMargin)
+                {
+                    parsedNestedRule = ParseNestedRule() == Parsed.True;
+                    if (!parsedNestedRule)
+                    {
+                        parsedNestedAtRule = ParseAtRule() == Parsed.True;
+                    }
+                }
+
                 // if we parsed a margin, we DON'T expect there to be a semi-colon.
-                // if we didn't parse a margin, then there better be either a semicolon or a closing brace.
-                if (!parsedMargin)
+                // if we didn't parse a margin/nested rule/nested at-rule, then there better be either a semicolon or a closing brace.
+                if (!parsedMargin && !parsedNestedRule && !parsedNestedAtRule)
                 {
                     if ((CurrentTokenType != TokenType.Character
                         || (CurrentTokenText != ";" && CurrentTokenText != "}"))
@@ -1806,6 +1819,25 @@ namespace NUglify.Css
             }
 
             return parsed;
+        }
+
+        Parsed ParseNestedRule()
+        {
+            // The '&' nesting selector can start a simple selector in CSS nesting.
+            if (CurrentTokenType == TokenType.Character && CurrentTokenText == "&")
+            {
+                AppendCurrent();
+                NextToken();
+            }
+
+            var parsed = ParseSelectorList();
+            if (parsed == Parsed.True && CurrentTokenType == TokenType.Character && CurrentTokenText == "{")
+            {
+                ParseDeclarationBlock(false);
+                return Parsed.True;
+            }
+
+            return Parsed.False;
         }
 
         Parsed ParsePage()
