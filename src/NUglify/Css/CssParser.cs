@@ -1705,7 +1705,7 @@ namespace NUglify.Css
                 var parsedNestedAtRule = false;
                 if (parsedDecl == Parsed.Empty && !parsedMargin)
                 {
-                    parsedNestedRule = ParseNestedRule() == Parsed.True;
+                    parsedNestedRule = IsLikelyNestedRuleStart() && ParseNestedRule() == Parsed.True;
                     if (!parsedNestedRule)
                     {
                         parsedNestedAtRule = ParseAtRule() == Parsed.True;
@@ -1838,6 +1838,32 @@ namespace NUglify.Css
             }
 
             return Parsed.False;
+        }
+
+        bool IsLikelyNestedRuleStart()
+        {
+            if (CurrentTokenType == TokenType.Hash
+                || CurrentTokenType == TokenType.Identifier
+                || CurrentTokenType == TokenType.Function
+                || CurrentTokenType == TokenType.Not
+                || CurrentTokenType == TokenType.Any
+                || CurrentTokenType == TokenType.Matches
+                || CurrentTokenType == TokenType.Is
+                || CurrentTokenType == TokenType.Where
+                || CurrentTokenType == TokenType.Has
+                || CurrentTokenType == TokenType.Character && (
+                    CurrentTokenText == "&"
+                    || CurrentTokenText == "."
+                    || CurrentTokenText == ":"
+                    || CurrentTokenText == "["
+                    || CurrentTokenText == "*"
+                    || CurrentTokenText == "|"
+                    || CurrentTokenText == ">"))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         Parsed ParsePage()
