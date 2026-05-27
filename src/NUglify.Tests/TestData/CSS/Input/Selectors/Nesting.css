@@ -1,0 +1,21 @@
+.card {
+  color: red;
+
+  &:hover {
+    color: blue;
+  }
+
+  .child {
+    display: block;
+  }
+
+  :has(> img) {
+    border: 0;
+  }
+
+  @media (min-width: 768px) {
+    & .child {
+      display: inline;
+    }
+  }
+}
